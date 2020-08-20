@@ -25,9 +25,6 @@ public class Meeting {
         this.name = name;
         this.occuredOn = occuredOn;
         this.duration = duration;
-
-        EventPublisher.instance()
-                .publish(new ScheduledMeeting(name, occuredOn, duration));
     }
 
     public Long getId() {

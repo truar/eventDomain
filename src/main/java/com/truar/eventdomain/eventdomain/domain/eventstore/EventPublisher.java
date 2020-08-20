@@ -17,7 +17,7 @@ public class EventPublisher {
     }
 
     public <T> void publish(T event) {
-        subscribers.stream()
+        subscribers.parallelStream()
                 .filter(s -> s.subscribedEventType() == event.getClass())
                 .forEach(s -> s.handleEvent(event));
     }

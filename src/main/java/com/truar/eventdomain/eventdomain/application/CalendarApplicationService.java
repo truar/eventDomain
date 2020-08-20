@@ -2,8 +2,8 @@ package com.truar.eventdomain.eventdomain.application;
 
 import com.truar.eventdomain.eventdomain.domain.meeting.Meeting;
 import com.truar.eventdomain.eventdomain.domain.meeting.MeetingRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 
 public class CalendarApplicationService {
@@ -13,7 +13,7 @@ public class CalendarApplicationService {
         this.meetingRepository = meetingRepository;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = UnexpectedMeetingRoomServiceException.class)
     public void scheduleMeeting(String name, LocalDateTime occuredOn, int duration) {
         meetingRepository.scheduleMeeting(new Meeting(name, occuredOn, duration));
     }
