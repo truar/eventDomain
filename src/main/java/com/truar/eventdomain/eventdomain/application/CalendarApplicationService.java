@@ -13,7 +13,7 @@ public class CalendarApplicationService {
         this.meetingRepository = meetingRepository;
     }
 
-    @Transactional(noRollbackFor = UnexpectedMeetingRoomServiceException.class)
+    @Transactional
     public void scheduleMeeting(String name, LocalDateTime occuredOn, int duration) {
         meetingRepository.scheduleMeeting(new Meeting(name, occuredOn, duration));
     }
