@@ -6,7 +6,7 @@ import java.util.List;
 
 public class EventPublisher {
 
-    static EventPublisher instance = new EventPublisher();
+    private static EventPublisher instance = new EventPublisher();
     private final List<EventSubscriber> subscribers = Collections.synchronizedList(new ArrayList<>());
 
     private EventPublisher() {
@@ -19,7 +19,13 @@ public class EventPublisher {
     public <T> void publish(T event) {
         subscribers.parallelStream()
                 .filter(s -> s.subscribedEventType() == event.getClass())
-                .forEach(s -> s.handleEvent(event));
+                .forEach(s -> {
+                    try {
+                        s.handleEvent(event);
+                    } catch (RuntimeException exception) {
+                        exception.printStackTrace();
+                    }
+                });
     }
 
     public <T> void subscribe(EventSubscriber<T> eventSubscriber) {

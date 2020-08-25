@@ -3,7 +3,6 @@ package com.truar.eventdomain.eventdomain.domain.meeting;
 import com.truar.eventdomain.eventdomain.domain.eventstore.EventPublisher;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.LocalDateTime;
 
@@ -11,9 +10,7 @@ import java.time.LocalDateTime;
 public class Meeting {
 
     @Id
-    @GeneratedValue
-    private Long id;
-
+    private String id;
     private String name;
     private LocalDateTime occuredOn;
     private int duration;
@@ -21,13 +18,17 @@ public class Meeting {
     protected Meeting() {
     }
 
-    public Meeting(String name, LocalDateTime occuredOn, int duration) {
+    public Meeting(String id, String name, LocalDateTime occuredOn, int duration) {
+        this.id = id;
         this.name = name;
         this.occuredOn = occuredOn;
         this.duration = duration;
+
+        EventPublisher.instance()
+                .publish(new ScheduledMeeting(name, occuredOn, duration));
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

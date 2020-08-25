@@ -1,47 +1,36 @@
 package com.truar.eventdomain.eventdomain;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.truar.eventdomain.eventdomain.domain.eventstore.EventPublisher;
 import com.truar.eventdomain.eventdomain.domain.eventstore.EventSubscriber;
-import com.truar.eventdomain.eventdomain.domain.meeting.Meeting;
 import com.truar.eventdomain.eventdomain.domain.meeting.ScheduledMeeting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.*;
 
-import java.util.Optional;
+import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestEntityManager
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 class EventDomainApplicationTests {
 
     @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private TestEntityManager testEntityManager;
+    private TestRestTemplate testRestTemplate;
 
     int eventCount;
 
     @BeforeEach
     void setUp() {
-        testEntityManager.clear();
         eventCount = 0;
     }
 
     @Test
-    @Transactional
     void test_with_success() throws Exception {
 
         EventPublisher.instance()
@@ -63,20 +52,23 @@ class EventDomainApplicationTests {
                 "\"duration\":1" +
                 "}";
 
-        mockMvc.perform(post("/meeting/schedule")
-                .content(scheduleMeetingJson)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        HttpEntity<String> entity = new HttpEntity<>(scheduleMeetingJson, headers);
+        ResponseEntity<Void> voidResponseEntity = testRestTemplate.postForEntity("/meeting/schedule", entity, Void.class);
+
+        assertThat(voidResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        URI uri = voidResponseEntity.getHeaders().getLocation();
 
         assertThat(eventCount).isEqualTo(1);
 
-        Meeting meeting = Optional.ofNullable(testEntityManager.find(Meeting.class, 1l)).orElseGet(() -> testEntityManager.find(Meeting.class, 2l));
-        assertNotNull(meeting);
-        assertThat(meeting.getName()).isEqualTo("a name");
+        String response = testRestTemplate.getForObject(uri, String.class);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(response);
+        assertThat(root.at("/name").asText()).isEqualTo("a name");
     }
 
     @Test
-    @Transactional
     void test_with_exception() throws Exception {
 
         EventPublisher.instance()
@@ -99,15 +91,19 @@ class EventDomainApplicationTests {
                 "\"duration\":0" +
                 "}";
 
-        mockMvc.perform(post("/meeting/schedule")
-                .content(scheduleMeetingJson)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        HttpEntity<String> entity = new HttpEntity<>(scheduleMeetingJson, headers);
+        ResponseEntity<Void> voidResponseEntity = testRestTemplate.postForEntity("/meeting/schedule", entity, Void.class);
+
+        assertThat(voidResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        URI uri = voidResponseEntity.getHeaders().getLocation();
 
         assertThat(eventCount).isEqualTo(1);
 
-        Meeting meeting = testEntityManager.find(Meeting.class, 1l);
-        assertNotNull(meeting);
-        assertThat(meeting.getName()).isEqualTo("a name");
+        String response = testRestTemplate.getForObject(uri, String.class);
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(response);
+        assertThat(root.at("/name").asText()).isEqualTo("a name");
     }
 }

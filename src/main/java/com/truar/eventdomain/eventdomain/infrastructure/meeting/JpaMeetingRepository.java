@@ -6,6 +6,8 @@ import com.truar.eventdomain.eventdomain.domain.meeting.MeetingRepository;
 import com.truar.eventdomain.eventdomain.domain.meeting.ScheduledMeeting;
 import org.springframework.stereotype.Repository;
 
+import java.util.UUID;
+
 @Repository
 public class JpaMeetingRepository implements MeetingRepository {
     private JpaMeetingDAO jpaMeetingDAO;
@@ -17,11 +19,16 @@ public class JpaMeetingRepository implements MeetingRepository {
     @Override
     public void scheduleMeeting(Meeting meeting) {
         jpaMeetingDAO.save(meeting);
-        try {
-            EventPublisher.instance()
-                    .publish(new ScheduledMeeting(meeting.getName(), meeting.getOccuredOn(), meeting.getDuration()));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    }
+
+    @Override
+    public String nextId() {
+        return UUID.randomUUID().toString();
+    }
+
+    @Override
+    public Meeting findById(String meetingId) {
+        return jpaMeetingDAO.findById(meetingId)
+                .orElseThrow();
     }
 }

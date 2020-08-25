@@ -14,7 +14,13 @@ public class CalendarApplicationService {
     }
 
     @Transactional
-    public void scheduleMeeting(String name, LocalDateTime occuredOn, int duration) {
-        meetingRepository.scheduleMeeting(new Meeting(name, occuredOn, duration));
+    public String scheduleMeeting(String name, LocalDateTime occuredOn, int duration) {
+        String id = meetingRepository.nextId();
+        meetingRepository.scheduleMeeting(new Meeting(id, name, occuredOn, duration));
+        return id;
+    }
+
+    public Meeting meetingOfId(String meetingId) {
+        return meetingRepository.findById(meetingId);
     }
 }
